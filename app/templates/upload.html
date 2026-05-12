@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Upload{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1 class="hero-title">Load your <em>data.</em></h1>
+    <p class="hero-sub">Upload a CSV file and map it to a PostgreSQL table in seconds. The pipeline handles type inference, validation, and bulk insertion automatically.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-value">16 MB</div>
+        <div class="hero-stat-label">Max file size</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">5</div>
+        <div class="hero-stat-label">Supported types</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">1 000</div>
+        <div class="hero-stat-label">Rows per batch</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- UPLOAD CARD -->
+<section class="page-section" style="display:flex; justify-content:center; padding-top:48px; padding-bottom:80px;">
+  <div class="card" style="width:100%; max-width:560px;">
+    <div class="card-accent"></div>
+    <div class="card-body">
+
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        CSV Upload
+      </div>
+      <h2 class="section-title">Select file &amp; target table</h2>
+      <p class="section-desc">Only <code>.csv</code> files are accepted. The table will be created automatically if it does not exist.</p>
+
+      <form method="POST" action="{{ url_for('upload.upload_file') }}" enctype="multipart/form-data" id="upload-form">
+
+        <div class="form-group">
+          <label class="form-label" for="file">CSV File</label>
+          <div class="file-drop" id="file-drop">
+            <input type="file" name="file" id="file" accept=".csv" required class="file-input">
+            <div class="file-drop-text" id="file-drop-text">
+              <span class="file-drop-icon">↑</span>
+              <span>Drag &amp; drop or <strong>click to browse</strong></span>
+              <span class="form-meta" id="file-name-display"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="target_table">Target Table Name</label>
+          <input type="text" name="target_table" id="target_table" required
+                 class="form-input" placeholder="e.g. sales_data"
+                 pattern="[a-zA-Z_][a-zA-Z0-9_]*"
+                 title="Letters, numbers, and underscores only. Must start with a letter or underscore.">
+          <span class="form-meta">Lowercase, snake_case recommended. Table is created if it does not exist.</span>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--full">
+          Upload &amp; Explore →
+        </button>
+
+      </form>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

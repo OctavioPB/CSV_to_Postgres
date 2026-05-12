@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Jobs{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1 class="hero-title">Scheduled <em>jobs.</em></h1>
+    <p class="hero-sub">Define recurring ETL pipelines using cron or interval schedules. Trigger jobs manually or let the scheduler run them automatically.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ jobs | length }}</div>
+        <div class="hero-stat-label">Total jobs</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ jobs | selectattr('status', 'equalto', 'success') | list | length }}</div>
+        <div class="hero-stat-label">Successful</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ jobs | selectattr('status', 'equalto', 'failed') | list | length }}</div>
+        <div class="hero-stat-label">Failed</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JOB TABLE -->
+<section class="page-section">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+    <div>
+      <div class="eyebrow"><div class="eyebrow-line"></div>Job registry</div>
+      <h2 class="section-title">All scheduled jobs</h2>
+    </div>
+    <button class="btn btn--primary" onclick="document.getElementById('create-job-form').scrollIntoView({behavior:'smooth'})">
+      + New Job
+    </button>
+  </div>
+
+  {% if jobs %}
+  <div style="overflow-x:auto;">
+    <table class="data-table" id="jobs-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Process Name</th>
+          <th>Schedule</th>
+          <th>Status</th>
+          <th>Last Run</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for job in jobs %}
+        <tr id="job-row-{{ job.id }}">
+          <td><code>{{ job.id }}</code></td>
+          <td><strong>{{ job.process_name }}</strong></td>
+          <td><code>{{ job.schedule }}</code></td>
+          <td>
+            <span class="badge badge--{{ job.status }}" id="status-badge-{{ job.id }}">
+              <span class="badge-dot"></span>{{ job.status }}
+            </span>
+          </td>
+          <td class="form-meta">
+            {% if job.last_run %}
+              {{ job.last_run.strftime('%Y-%m-%d %H:%M') }}
+            {% else %}
+              Never
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn--sm btn--outline"
+                      onclick="triggerJob({{ job.id }}, '{{ job.process_name }}')"
+                      id="trigger-btn-{{ job.id }}">
+                ▶ Run
+              </button>
+              <form method="POST" action="{{ url_for('jobs.delete_job', job_id=job.id) }}"
+                    onsubmit="return confirm('Delete job {{ job.process_name }}?');"
+                    style="display:inline;">
+                <button type="submit" class="btn btn--sm btn--danger">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p style="color:var(--mid); text-align:center; padding:48px 0;">No jobs configured yet. Create one below.</p>
+  {% endif %}
+
+</section>
+
+<div class="section-divider"></div>
+
+<!-- CREATE JOB FORM -->
+<section class="page-section" id="create-job-form">
+  <div class="card" style="max-width:640px;">
+    <div class="card-accent"></div>
+    <div class="card-body">
+      <div class="eyebrow"><div class="eyebrow-line"></div>New job</div>
+      <h2 class="section-title">Create scheduled job</h2>
+      <p class="section-desc">
+        Cron format: <code>0 6 * * *</code> (daily at 6 AM).
+        Interval format: <code>interval:minutes=30</code> or <code>interval:hours=1</code>.
+      </p>
+
+      <form method="POST" action="{{ url_for('jobs.create_job') }}">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="process_name">Process Name</label>
+            <input type="text" name="process_name" id="process_name" required
+                   class="form-input" placeholder="Daily sales load">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="schedule">Schedule</label>
+            <input type="text" name="schedule" id="schedule" required
+                   class="form-input" placeholder="0 6 * * *">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="source_path">Source CSV Path</label>
+            <input type="text" name="source_path" id="source_path"
+                   class="form-input" placeholder="/data/sales.csv">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="target_table">Target Table</label>
+            <input type="text" name="target_table" id="target_table"
+                   class="form-input" placeholder="sales_data">
+          </div>
+        </div>
+        <button type="submit" class="btn btn--primary">Create Job →</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

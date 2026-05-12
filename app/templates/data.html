@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Data{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1 class="hero-title">Browse <em>data.</em></h1>
+    <p class="hero-sub">Explore the contents of your PostgreSQL tables. Select a table from the sidebar, then page through its rows.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ all_tables | length }}</div>
+        <div class="hero-stat-label">Tables available</div>
+      </div>
+      {% if selected_table %}
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ "{:,}".format(total_rows) }}</div>
+        <div class="hero-stat-label">Rows in {{ selected_table }}</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ columns | length }}</div>
+        <div class="hero-stat-label">Columns</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- BODY -->
+<div class="data-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="table-sidebar">
+    <div class="sidebar-header">
+      <div class="eyebrow"><div class="eyebrow-line"></div>Tables</div>
+    </div>
+    {% if all_tables %}
+      <ul class="table-list">
+        {% for t in all_tables %}
+          <li>
+            <a href="{{ url_for('data.data_page', table=t) }}"
+               class="table-list-item {% if t == selected_table %}table-list-item--active{% endif %}">
+              <span class="table-list-icon">▤</span>
+              {{ t }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="sidebar-empty">No tables found.<br>Upload a CSV first.</p>
+    {% endif %}
+  </aside>
+
+  <!-- MAIN PANEL -->
+  <main class="data-main">
+
+    {% if error %}
+      <div class="alert alert--error">
+        <strong>Query failed.</strong> {{ error }}
+      </div>
+
+    {% elif not selected_table %}
+      <div class="data-empty">
+        <p class="data-empty-title">Select a <em>table.</em></p>
+        <p class="data-empty-sub">Choose a table from the sidebar to view its contents.</p>
+      </div>
+
+    {% else %}
+      <!-- TABLE HEADER -->
+      <div class="data-table-header">
+        <div>
+          <div class="eyebrow"><div class="eyebrow-line"></div>Viewing</div>
+          <h2 class="section-title">{{ selected_table }}</h2>
+        </div>
+        <div class="pagination-info">
+          {% set start = (page - 1) * page_size + 1 %}
+          {% set end = [page * page_size, total_rows] | min %}
+          {% if total_rows > 0 %}
+            <span class="form-meta">
+              Rows {{ "{:,}".format(start) }}–{{ "{:,}".format(end) }} of {{ "{:,}".format(total_rows) }}
+            </span>
+          {% else %}
+            <span class="form-meta">No rows</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if rows %}
+        <!-- DATA TABLE -->
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                {% for col in columns %}
+                  <th>{{ col }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+                <tr>
+                  {% for cell in row %}
+                    <td>
+                      {% if cell is none %}
+                        <span class="null-badge">NULL</span>
+                      {% else %}
+                        {{ cell | string | truncate(120, true, '…') }}
+                      {% endif %}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINATION -->
+        {% if total_pages > 1 %}
+        <nav class="pagination">
+          {% if page > 1 %}
+            <a href="{{ url_for('data.data_page', table=selected_table, page=1) }}"
+               class="page-btn">«</a>
+            <a href="{{ url_for('data.data_page', table=selected_table, page=page-1) }}"
+               class="page-btn">‹ Prev</a>
+          {% else %}
+            <span class="page-btn page-btn--disabled">«</span>
+            <span class="page-btn page-btn--disabled">‹ Prev</span>
+          {% endif %}
+
+          <span class="page-current">Page {{ page }} / {{ total_pages }}</span>
+
+          {% if page < total_pages %}
+            <a href="{{ url_for('data.data_page', table=selected_table, page=page+1) }}"
+               class="page-btn">Next ›</a>
+            <a href="{{ url_for('data.data_page', table=selected_table, page=total_pages) }}"
+               class="page-btn">»</a>
+          {% else %}
+            <span class="page-btn page-btn--disabled">Next ›</span>
+            <span class="page-btn page-btn--disabled">»</span>
+          {% endif %}
+        </nav>
+        {% endif %}
+
+      {% else %}
+        <div class="data-empty" style="padding: 48px 0;">
+          <p class="data-empty-sub">This table has no rows yet.</p>
+        </div>
+      {% endif %}
+    {% endif %}
+
+  </main>
+</div>
+
+{% endblock %}

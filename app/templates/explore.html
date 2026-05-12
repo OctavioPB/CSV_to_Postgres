@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Explore{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1 class="hero-title">Review &amp; <em>confirm.</em></h1>
+    <p class="hero-sub">Inspect inferred column types, override where needed, then insert into PostgreSQL. Columns flagged with ⚠ are &gt;95% null.</p>
+    {% if profile %}
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ profile.row_count | default(0) }}</div>
+        <div class="hero-stat-label">Rows detected</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ profile.col_count | default(0) }}</div>
+        <div class="hero-stat-label">Columns</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ filename }}</div>
+        <div class="hero-stat-label">Source file</div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="page-section">
+
+  <!-- INSERT RESULT -->
+  {% if result %}
+    {% if result.error %}
+      <div class="alert alert--error" style="margin-bottom:32px;">
+        <strong>Insert failed.</strong> {{ result.error }}
+      </div>
+    {% else %}
+      <div class="alert alert--success" style="margin-bottom:32px;">
+        <strong>Done.</strong> {{ result.rows_inserted }} rows inserted into
+        <code>{{ result.target_table }}</code>.
+        {% if result.rows_failed > 0 %}
+          {{ result.rows_failed }} rows failed (see logs).
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {% if profile %}
+  <form method="POST" action="{{ url_for('explore.explore_confirm') }}">
+    <input type="hidden" name="target_table" value="{{ target_table }}">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div class="eyebrow"><div class="eyebrow-line"></div>Column profile</div>
+        <h2 class="section-title">{{ target_table }}</h2>
+      </div>
+      <button type="submit" class="btn btn--primary">Confirm &amp; Insert →</button>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Column</th>
+            <th>Inferred type</th>
+            <th>Override</th>
+            <th>Nulls</th>
+            <th>Sample values</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for col in profile.columns %}
+          <tr>
+            <td>
+              <code>{{ col.name }}</code>
+              {% if col.high_null_warning %}
+                <span class="badge badge--warning" title="More than 95% null">⚠ high null</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge badge--blue">{{ col.inferred_type }}</span>
+              {% if col.date_format %}
+                <span class="form-meta" style="display:block; margin-top:4px;">{{ col.date_format }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <select name="type_{{ col.name }}" class="form-select">
+                {% for t in ['int64', 'float64', 'datetime', 'bool', 'str'] %}
+                  <option value="{{ t }}" {% if t == col.inferred_type %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <span>{{ col.null_pct }}%</span>
+                <div class="bar-track">
+                  <div class="bar-fill {% if col.null_pct > 50 %}bar-fill--warn{% endif %}"
+                       style="width:{{ col.null_pct }}%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="sample-cell">
+              {% for v in col.sample_values[:3] %}
+                <code class="sample-value">{{ v }}</code>
+              {% endfor %}
+              {% if not col.sample_values %}
+                <span class="form-meta">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; margin-top:24px;">
+      <button type="submit" class="btn btn--primary">Confirm &amp; Insert →</button>
+    </div>
+  </form>
+  {% else %}
+    <div style="text-align:center; padding:80px 0;">
+      <p style="font-family:var(--fd); font-size:22px; font-weight:300; color:var(--mid);">
+        No file uploaded yet.
+      </p>
+      <a href="{{ url_for('upload.upload_page') }}" class="btn btn--primary" style="margin-top:24px; display:inline-block;">
+        Go to Upload →
+      </a>
+    </div>
+  {% endif %}
+
+</section>
+
+{% endblock %}

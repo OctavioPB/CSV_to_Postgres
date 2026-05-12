@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ETL Pipeline{% endblock %} · OPB</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar">
+  <a href="/" class="nav-monogram">
+    <span class="monogram-o">O</span><em class="monogram-pb">PB</em>
+  </a>
+  <span class="nav-app-title">ETL Pipeline</span>
+  <div class="nav-links">
+    <a href="{{ url_for('upload.upload_page') }}"
+       class="nav-link {% if active_tab == 'upload' %}nav-link--active{% endif %}">
+      Upload
+    </a>
+    <a href="{{ url_for('explore.explore_page') }}"
+       class="nav-link {% if active_tab == 'explore' %}nav-link--active{% endif %}">
+      Explore
+    </a>
+    <a href="{{ url_for('jobs.jobs_page') }}"
+       class="nav-link {% if active_tab == 'jobs' %}nav-link--active{% endif %}">
+      Jobs
+    </a>
+    <a href="{{ url_for('data.data_page') }}"
+       class="nav-link {% if active_tab == 'data' %}nav-link--active{% endif %}">
+      Data
+    </a>
+  </div>
+</nav>
+
+<!-- FLASH MESSAGES -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash flash--{{ category }}">
+          {{ message }}
+          <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- CONTENT -->
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <span>OPB · Octavio Pérez Bravo · ETL Pipeline</span>
+  <span id="footer-date"></span>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
